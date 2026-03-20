@@ -35,4 +35,11 @@ $(document).ready(function() {
             sync: true,
         },
     });
+
+    //mic click
+    $("#MicBtn").click(function () { 
+        $("#Oval").attr("hidden", true);
+        $('#SiriWave').attr('hidden', false);
+        
+    });
 });
