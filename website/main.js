@@ -1,5 +1,4 @@
 $(document).ready(function() {
-
   $('.text').textillate({
         loop: true,
         sync: true,
@@ -36,10 +35,11 @@ $(document).ready(function() {
         },
     });
 
-    //mic click
-    $("#MicBtn").click(function () { 
-        $("#Oval").attr("hidden", true);
-        $('#SiriWave').attr('hidden', false);
-        
-    });
+  // mic click
+  $('#MicBtn').click(function() {
+    eel.play_sound();
+    $('#Oval').attr('hidden', true);
+    $('#SiriWave').attr('hidden', false);
+    eel.all_commands()()
+  });
 });
