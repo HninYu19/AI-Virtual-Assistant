@@ -41,14 +41,16 @@ def all_commands():
 
     query = takecommand()
     print(query)
-
-    if "open" in query:
+    
+    # Check for YouTube-related commands FIRST
+    if "youtube" in query:
+        from engine.features import handle_youtube_command
+        handle_youtube_command(query)
+    elif "open" in query:
         from engine.features import openCommand
         openCommand(query)
-    elif "on youtube":
-        from engine.features import PlayYoutube
-        PlayYoutube(query)
     else:
         print("Not running")
+        speak("I didn't understand that command")
 
     eel.show_hood()
