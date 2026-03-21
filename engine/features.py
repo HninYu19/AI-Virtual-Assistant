@@ -5,7 +5,20 @@ from engine.command import speak
 import os
 import pywhatkit as kit
 import webbrowser
+import sqlite3
 import re
+
+# Initialize database connection (you might already have this elsewhere)
+DB_PATH = "engine/baymax.db"  # Adjust path as needed
+
+def get_db_connection():
+    """Create and return database connection"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        return conn
+    except sqlite3.Error as e:
+        print(f"Database connection error: {e}")
+        return None
 
 #play sound 
 @eel.expose
@@ -14,18 +27,65 @@ def play_sound():
     playsound(music_dir)
 
 def openCommand(query):
+    """Open applications or websites based on voice command"""
     query = query.replace(ASSISTANT_NAME, "")
     query = query.replace("open", "")
     query = query.strip().lower()
-
+    
+    # Check if it's a YouTube command first
     if "youtube" in query:
-        # This will be handled by handle_youtube_command now
-        pass
-    elif query != "":
-        speak("Opening "+query)
-        os.system("start "+query)
+        handle_youtube_command(query)
+        return
+    
+    if query != "":
+        app_name = query
+        
+        try:
+            # Try to connect to database
+            conn = get_db_connection()
+            if conn:
+                cursor = conn.cursor()
+                
+                # First, check in sys_command for local applications
+                cursor.execute('SELECT path FROM sys_command WHERE LOWER(name) = LOWER(?)', (app_name,))
+                results = cursor.fetchall()
+                
+                if len(results) != 0:
+                    speak("Opening " + app_name)
+                    os.startfile(results[0][0])
+                else:
+                    # If not found in sys_command, check in web_command for websites
+                    cursor.execute('SELECT url FROM web_command WHERE LOWER(name) = LOWER(?)', (app_name,))
+                    results = cursor.fetchall()
+                    
+                    if len(results) != 0:
+                        speak("Opening " + app_name)
+                        webbrowser.open(results[0][0])
+                    else:
+                        # If not in database, try to open as a Windows app
+                        speak("Opening " + app_name)
+                        try:
+                            os.system('start ' + app_name)
+                        except Exception as e:
+                            speak("Application not found")
+                            print(f"Error opening {app_name}: {e}")
+                
+                conn.close()
+            else:
+                # Fallback if database connection fails
+                speak("Opening " + query)
+                os.system("start " + query)
+                
+        except sqlite3.Error as e:
+            speak("Something went wrong with the database")
+            print(f"Database error: {e}")
+            # Fallback method
+            try:
+                os.system('start ' + query)
+            except:
+                speak("Not found")
     else:
-        speak("Not Found")
+        speak("What would you like to open?")
 
 def handle_youtube_command(query):
     """Handle all YouTube-related commands"""
