@@ -6,7 +6,7 @@ import time
 def speak(text):
     engine = pyttsx3.init('sapi5')
     voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[1].id)
+    engine.setProperty('voice', voices[0].id)
     engine.setProperty('rate', 174)
     eel.show_message(text)
     engine.say(text)
@@ -38,19 +38,20 @@ def takecommand():
 
 @eel.expose
 def all_commands():
-
-    query = takecommand()
-    print(query)
-    
-    # Check for YouTube-related commands FIRST
-    if "youtube" in query:
-        from engine.features import handle_youtube_command
-        handle_youtube_command(query)
-    elif "open" in query:
-        from engine.features import openCommand
-        openCommand(query)
-    else:
-        print("Not running")
-        speak("I didn't understand that command")
-
-    eel.show_hood()
+    try:
+        query = takecommand()
+        print(query)
+        
+        # Check for YouTube-related commands FIRST
+        if "youtube" in query:
+            from engine.features import handle_youtube_command
+            handle_youtube_command(query)
+        elif "open" in query:
+            from engine.features import openCommand
+            openCommand(query)
+        else:
+            print("Not running")
+            speak("I didn't understand that command")
+    except:
+        print("Error")
+        eel.show_hood()

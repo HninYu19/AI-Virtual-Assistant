@@ -1,1 +1,1 @@
-ASSISTANT_NAME = "BayMax"
+ASSISTANT_NAME = "Jarvis"

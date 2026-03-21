@@ -42,4 +42,14 @@ $(document).ready(function() {
     $('#SiriWave').attr('hidden', false);
     eel.all_commands()()
   });
+
+  function doc_keyUp(e) {
+    if (e.key == 'j' && e.metaKey) {
+      eel.play_sound();
+      $('#Oval').attr('hidden', true);
+      $('#SiriWave').attr('hidden', false);
+      eel.all_commands()();
+    }
+  }
+  document.addEventListener('keyup', doc_keyUp, false);
 });
