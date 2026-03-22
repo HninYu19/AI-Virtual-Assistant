@@ -37,10 +37,15 @@ def takecommand():
     return query.lower()
 
 @eel.expose
-def all_commands():
-    try:
+def all_commands(message=1):
+
+    if message == 1:
         query = takecommand()
         print(query)
+    else:
+        query = message
+
+    try:
         
         # Check for YouTube-related commands FIRST
         if "youtube" in query:
