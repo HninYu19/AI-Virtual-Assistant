@@ -13,6 +13,7 @@ import pyaudio
 import struct
 import time
 from engine.command import all_commands
+from hugchat import hugchat
 # Initialize database connection (you might already have this elsewhere)
 DB_PATH = "engine/jarvis.db"  # Adjust path as needed
 
@@ -188,3 +189,13 @@ def hotword():
             audio_stream.close()
         if paud is not None:
             paud.terminate()
+
+def chatBot(query):
+    user_input = query.lower()
+    chatbot = hugchat.ChatBot(cookie_path="engine/cookies.json")
+    id = chatbot.new_conversation()
+    chatbot.change_conversation(id)
+    response = chatbot.chat(user_input)
+    print(response)
+    speak(response)
+    return response

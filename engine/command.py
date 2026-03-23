@@ -6,6 +6,7 @@ import eel
 import time
 
 def speak(text):
+    text = str(text).lower()
     engine = pyttsx3.init('sapi5')
     voices = engine.getProperty('voices')
     engine.setProperty('voice', voices[0].id)
@@ -59,8 +60,9 @@ def all_commands(message=1):
             from engine.features import openCommand
             openCommand(query)
         else:
-            print("Not running")
-            speak("I didn't understand that command")
-    except:
-        print("Error")
-        eel.show_hood()
+            from engine.features import chatBot
+            chatBot(query)
+            
+    except Exception as e:
+       print("Actual error:", e)
+       eel.show_hood()
