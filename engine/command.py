@@ -1,3 +1,5 @@
+from email.mime import audio
+
 import pyttsx3
 import speech_recognition as sr
 import eel
@@ -10,6 +12,7 @@ def speak(text):
     engine.setProperty('rate', 174)
     eel.show_message(text)
     engine.say(text)
+    eel.receiverText(text)
     engine.runAndWait()
 
 
@@ -42,9 +45,10 @@ def all_commands(message=1):
     if message == 1:
         query = takecommand()
         print(query)
+        eel.senderText(query)
     else:
         query = message
-
+        eel.senderText(query)
     try:
         
         # Check for YouTube-related commands FIRST
