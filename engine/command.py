@@ -1,5 +1,3 @@
-from email.mime import audio
-
 import pyttsx3
 import speech_recognition as sr
 import eel
@@ -25,7 +23,7 @@ def takecommand():
         r.pause_threshold = 1
         r.adjust_for_ambient_noise(source)
         
-        audio = r.listen(source, 10, 60)
+        audio = r.listen(source, 10, 6)
 
     try:
         print("Recognizing...")
@@ -59,10 +57,55 @@ def all_commands(message=1):
         elif "open" in query:
             from engine.features import openCommand
             openCommand(query)
+        # Check for CALL commands (add this section)
+        elif any(phrase in query for phrase in ["call", "phone call", "video call"]):
+            from engine.features import findContact, whatsApp, makeCall, sendMessage
+            contact_no, name = findContact(query)
+            if contact_no != 0:
+                speak("Which mode do you want to use? WhatsApp or mobile?")
+                preference = takecommand()
+                print(f"User preference: {preference}")
+
+                if "mobile" in preference:
+                    speak(f"Calling {name} via mobile")
+                    makeCall(name, contact_no)
+                elif "whatsapp" in preference:
+                    # Check if it's video call or voice call
+                    if "video" in query:
+                        speak(f"Starting video call with {name} on WhatsApp")
+                        whatsApp(contact_no, '', 'video call', name)
+                    else:
+                        speak(f"Calling {name} on WhatsApp")
+                        whatsApp(contact_no, '', 'call', name)
+                else:
+                    speak("Please specify WhatsApp or mobile")
+        # Check for message/send commands
+        elif any(phrase in query for phrase in ["send message", "message to", "text to", "send sms", "message"]):
+            from engine.features import findContact, whatsApp, makeCall, sendMessage
+            contact_no, name = findContact(query)
+            if contact_no != 0:
+                speak("Which mode do you want to use? WhatsApp or mobile?")
+                preference = takecommand()
+                print(f"User preference: {preference}")
+
+                if "mobile" in preference:
+                    speak("What message would you like to send?")
+                    message_text = takecommand()
+                    if message_text:
+                        sendMessage(message_text, contact_no, name)
+                elif "whatsapp" in preference:
+                    speak("What message would you like to send?")
+                    message_text = takecommand()
+                    if message_text:
+                        whatsApp(contact_no, message_text, 'message', name)
+                else:
+                    speak("Please specify WhatsApp or mobile")
         else:
             from engine.features import chatBot
             chatBot(query)
             
     except Exception as e:
        print("Actual error:", e)
+       import traceback
+       traceback.print_exc()
        eel.show_hood()

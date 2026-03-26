@@ -12,7 +12,12 @@ import pvporcupine
 import pyaudio
 import struct
 import time
+import pyautogui
+import subprocess
+import cursor
+from pipes import quote
 from engine.command import all_commands
+from engine.helper import extract_yt_term, markdown_to_text, remove_words
 from hugchat import hugchat
 # Initialize database connection (you might already have this elsewhere)
 DB_PATH = "engine/jarvis.db"  # Adjust path as needed
@@ -190,6 +195,106 @@ def hotword():
         if paud is not None:
             paud.terminate()
 
+def findContact(query):
+    
+    words_to_remove = [ASSISTANT_NAME, 'make', 'a', 'to', 'phone', 'call', 'send', 'message', 'whatsapp', 'video']
+    query = remove_words(query, words_to_remove)
+
+    try:
+        query = query.strip().lower()
+        
+        # Use the correct path to jarvis.db in the engine folder
+        import os
+        db_path = os.path.join('engine', 'jarvis.db')
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Search for contact by name (case-insensitive)
+        cursor.execute("SELECT name, mobile_no FROM contacts WHERE LOWER(name) = LOWER(?) OR LOWER(name) LIKE ?", 
+                      (query, '%' + query + '%'))
+        results = cursor.fetchall()
+        
+        print(f"Search results for '{query}': {results}")
+        
+        if not results:
+            speak(f"{query} not exist in contacts")
+            conn.close()
+            return 0, 0
+            
+        # Get the first matching contact
+        contact_name = results[0][0]
+        mobile_number = results[0][1]
+        
+        if not mobile_number:
+            speak(f"{contact_name} does not have a phone number in contacts")
+            conn.close()
+            return 0, 0
+            
+        # Clean the mobile number - remove spaces, dashes, etc.
+        mobile_number_str = ''.join(filter(str.isdigit, str(mobile_number)))
+        
+        print(f"Found contact: {contact_name}, Number: {mobile_number_str}")
+        conn.close()
+        return mobile_number_str, contact_name
+        
+    except Exception as e:
+        print(f"Error in findContact: {e}")
+        import traceback
+        traceback.print_exc()
+        speak('Error finding contact')
+        return 0, 0
+    
+def whatsApp(mobile_no, message, flag, name):
+
+    if flag == 'message':
+        target_tab = 12
+        jarvis_message = "message send successfully to "+name
+
+    elif flag == 'call':
+        target_tab = 7
+        message = ''
+        jarvis_message = "calling to "+name
+
+    else:
+        target_tab = 6
+        message = ''
+        jarvis_message = "staring video call with "+name
+
+    # Encode the message for URL
+    from pipes import quote
+    encoded_message = quote(message)
+    print(encoded_message)
+    
+    # Construct the URL
+    whatsapp_url = f"whatsapp://send?phone={mobile_no}&text={encoded_message}"
+
+    # Construct the full command
+    full_command = f'start "" "{whatsapp_url}"'
+
+    # Open WhatsApp with the constructed URL using cmd.exe
+    import subprocess
+    import time
+    import pyautogui
+    
+    # Remove the duplicate call - only open once
+    subprocess.run(full_command, shell=True)
+    time.sleep(5)
+    
+    pyautogui.hotkey('ctrl', 'f')
+
+    for i in range(1, target_tab):
+        pyautogui.hotkey('tab')
+
+    pyautogui.hotkey('enter')
+    
+    # Wait for the message to be typed
+    time.sleep(3)
+    
+    # Press Enter only once to send
+    pyautogui.press('enter')
+    
+    speak(jarvis_message)
+
 def chatBot(query):
     user_input = query.lower()
     chatbot = hugchat.ChatBot(cookie_path="engine/cookies.json")
@@ -199,3 +304,62 @@ def chatBot(query):
     print(response)
     speak(response)
     return response
+
+def makeCall(name, mobileNo):
+    import subprocess
+    import time
+    
+    mobileNo = ''.join(filter(str.isdigit, str(mobileNo)))
+    speak(f"Calling {name}")
+    print(f"Calling {name} at {mobileNo}")
+    
+    # Open dialer with the number
+    subprocess.run(['adb', 'shell', 'am', 'start', '-a', 'android.intent.action.CALL', '-d', f'tel:{mobileNo}'], capture_output=True)
+    time.sleep(2)
+    
+    # Some phones need the call button to be pressed
+    # Try tapping the call button if the dialer doesn't auto-dial
+    # subprocess.run(['adb', 'shell', 'input', 'tap', '540', '1800'], capture_output=True)
+
+def sendMessage(message, mobileNo, name):
+    from engine.helper import replace_spaces_with_percent_s, goback, keyEvent
+    import subprocess
+    import time
+    
+    mobileNo = replace_spaces_with_percent_s(mobileNo)
+    speak("sending message")
+    
+    print(f"DEBUG - Full message to send: '{message}'")
+    
+    print("Step 1: Going back to home")
+    goback(4)
+    time.sleep(1)
+    
+    print("Step 2: Pressing home button")
+    keyEvent(3)
+    time.sleep(1)
+    
+    print("Step 3: Opening messaging app with contact")
+    subprocess.run(['adb', 'shell', 'am', 'start', '-a', 'android.intent.action.VIEW', '-d', f'sms:{mobileNo}'], capture_output=True)
+    time.sleep(3)
+    
+    print("Step 4: Waiting for conversation to open")
+    time.sleep(2)
+    
+    print(f"Step 5: Typing message: {message}")
+    # Type the message word by word to handle spaces properly
+    words = message.split()
+    for i, word in enumerate(words):
+        subprocess.run(['adb', 'shell', 'input', 'text', word], capture_output=True)
+        if i < len(words) - 1:
+            subprocess.run(['adb', 'shell', 'input', 'keyevent', '62'], capture_output=True)  # Space key
+            time.sleep(0.1)
+    
+    time.sleep(1)
+    
+    print("Step 6: Sending message")
+    # Tap the send button at the correct coordinates
+    subprocess.run(['adb', 'shell', 'input', 'tap', '983', '1310'], capture_output=True)
+    time.sleep(2)
+    
+    speak("message send successfully to " + name)
