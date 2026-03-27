@@ -4,6 +4,19 @@ body {
   overflow-x: hidden;
 }
 
+/* New classes to replace inline styles */
+.canvas-container {
+  height: 80vh;
+}
+
+.canvas-position {
+  position: absolute;
+}
+
+.siri-container-height {
+  height: 100vh;
+}
+
 .square {
   position: relative;
   width: 400px;
@@ -66,6 +79,7 @@ body {
     transform: rotate(360deg);
   }
 }
+
 @keyframes animate2 {
   0% {
     transform: rotate(0deg);
@@ -74,6 +88,7 @@ body {
     transform: rotate(360deg);
   }
 }
+
 @keyframes animate3 {
   0% {
     transform: rotate(0deg);
@@ -83,8 +98,7 @@ body {
   }
 }
 
-/* Input Filed Start*/
-
+/* Input Field Start */
 #TextInput {
   background-color: #181818a8;
   border-color: blue;
@@ -106,6 +120,7 @@ body {
   font-family: cursive;
 }
 
+/* Button Styles */
 .glow-on-hover {
   width: 35px;
   height: 35px;
@@ -162,41 +177,170 @@ body {
   border-radius: 10px;
 }
 
+/* Focus styles for accessibility */
+.glow-on-hover:focus-visible {
+  outline: 2px solid #00ff00;
+  outline-offset: 2px;
+}
+
 @keyframes glowing {
   0% {
     background-position: 0 0;
   }
-
   50% {
     background-position: 400% 0;
   }
-
   100% {
     background-position: 0 0;
   }
 }
 
-/*Chat Box*/
-.chat-canvas{
+/* Chat Box */
+.chat-canvas {
   background-color: #0dcaf014;
 }
-.receiver_message{
-  padding : 8px;
+
+.receiver_message {
+  padding: 8px;
   border: 2px solid cyan;
   border-radius: 0px 15px 15px 20px;
   width: auto;
   color: white;
   background-color: #0dcad014;
+  margin: 5px;
+  word-wrap: break-word;
+  max-width: 80%;
 }
-.sender_message{
-  padding : 8px;
+
+.sender_message {
+  padding: 8px;
   border: 1px solid #0045ff;
   border-radius: 15px 15px 0px 20px;
   width: auto;
   color: white;
   background-color: #0045ff;
+  margin: 5px;
+  word-wrap: break-word;
+  max-width: 80%;
+  margin-left: auto;
 }
-.width-size{
+
+.width-size {
   max-width: 80%;
   width: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .canvas-container {
+    height: 60vh;
+  }
+  
+  #TextInput {
+    margin: 0px 10%;
+  }
+  
+  .square {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  #TextInput {
+    margin: 0px 5%;
+  }
+  
+  .square {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .glow-on-hover {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.svg-frame {
+  position: relative;
+  width: 455px;
+  height: 455px;
+  transform-style: preserve-3d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: change-view 2s ease-in infinite;
+}
+
+@keyframes change-view {
+
+  0%,
+  50% {
+    transform: rotate(-0deg) skew(00deg) translateX(calc(0 * var(--i))) translateY(calc(-0px * var(--i)));
+  }
+
+  70%,
+  100% {
+    transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
+  }
+}
+
+svg {
+  position: absolute;
+  transition: 0.5s;
+  transform-origin: center;
+  width: 450px;
+  height: 450px;
+  fill: none;
+  animation: change-view 5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px #00aaff);
+}
+
+#big-centro,
+#outter1,
+#solo-lines,
+#center,
+#outter-center,
+#bottom-dots,
+#center-lines,
+#squares,
+#top-dots {
+  transform-origin: center;
+  animation: rotate 4s ease-in-out infinite alternate;
+}
+
+#big-centro {
+  animation-delay: -1.5s;
+}
+
+#outter1 {
+  animation-delay: -1.2s;
+}
+
+#center {
+  animation-delay: -2.2s;
+}
+
+#bottom-dots,
+#top-dots {
+  animation-duration: 7s;
+}
+
+#center-lines,
+#outter-center {
+  animation-duration: 6s;
+  animation-delay: -3s;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Lottie player container */
+.lottie-player-container {
+  width: 300px;
+  height: 300px;
 }
