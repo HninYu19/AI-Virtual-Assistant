@@ -230,10 +230,22 @@ def findContact(query):
             conn.close()
             return 0, 0
             
-        # Clean the mobile number - remove spaces, dashes, etc.
-        mobile_number_str = ''.join(filter(str.isdigit, str(mobile_number)))
+        # Clean the mobile number and ensure it has country code
+        # Remove any spaces, dashes, parentheses
+        import re
+        mobile_number_str = re.sub(r'[\s\-\(\)]', '', str(mobile_number))
         
-        print(f"Found contact: {contact_name}, Number: {mobile_number_str}")
+        # IMPORTANT: Add +86 if it's a Chinese number (starts with 1 and is 11 digits)
+        # but doesn't have the + prefix
+        if mobile_number_str and not mobile_number_str.startswith('+'):
+            # If it's a valid Chinese number (11 digits starting with 1)
+            if re.match(r'^1\d{10}$', mobile_number_str):
+                mobile_number_str = f'+86{mobile_number_str}'
+            # If it already has 86 at start but no +, add the +
+            elif mobile_number_str.startswith('86') and len(mobile_number_str) == 13:
+                mobile_number_str = f'+{mobile_number_str}'
+        
+        print(f"Found contact: {contact_name}, Formatted Number: {mobile_number_str}")
         conn.close()
         return mobile_number_str, contact_name
         
@@ -308,12 +320,24 @@ def chatBot(query):
 def makeCall(name, mobileNo):
     import subprocess
     import time
+    import re
     
-    mobileNo = ''.join(filter(str.isdigit, str(mobileNo)))
+    # Clean the number - remove any non-digit except '+'
+    mobileNo = re.sub(r'[^\d+]', '', str(mobileNo))
+    
+    # Ensure the number has the country code
+    if mobileNo and not mobileNo.startswith('+'):
+        # If it's a Chinese number (starts with 1 and is 11 digits)
+        if re.match(r'^1\d{10}$', mobileNo):
+            mobileNo = f'+86{mobileNo}'
+        # If it has 86 but no +, add +
+        elif mobileNo.startswith('86') and len(mobileNo) == 12:
+            mobileNo = f'+{mobileNo}'
+    
     speak(f"Calling {name}")
     print(f"Calling {name} at {mobileNo}")
     
-    # Open dialer with the number
+    # Open dialer with the number (use tel: prefix with the full number)
     subprocess.run(['adb', 'shell', 'am', 'start', '-a', 'android.intent.action.CALL', '-d', f'tel:{mobileNo}'], capture_output=True)
     time.sleep(2)
     
@@ -359,7 +383,7 @@ def sendMessage(message, mobileNo, name):
     
     print("Step 6: Sending message")
     # Tap the send button at the correct coordinates
-    subprocess.run(['adb', 'shell', 'input', 'tap', '983', '1310'], capture_output=True)
+    subprocess.run(['adb', 'shell', 'input', 'tap', '988', '1451'], capture_output=True)
     time.sleep(2)
     
     speak("message send successfully to " + name)
