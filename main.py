@@ -1,73 +1,68 @@
 import os
 import eel
-import multiprocessing
-import subprocess
 import sys
-import time
+import subprocess
+import traceback
 
 from engine.features import *
 from engine.command import *
 from engine.auth import recoganize
 
 def start():
-
-    eel.init('website')
-
-    play_sound()
-
-    @eel.expose
-    def start_authentication():
-        """Start face authentication process"""
-        print("Starting face authentication from web...")
-        speak("Ready for Face Authentication")
-        flag = recoganize.AuthenticationFace()  # Make sure this function exists
-        if flag == 1:
-            speak("Face Authentication Successful")
-            return {"success": True, "message": "Authentication successful"}
-        else:
-            speak("Face Authentication Failed")
-            return {"success": False, "message": "Authentication failed"}
+    # Set up Eel with proper error handling
+    eel.init("website", allowed_extensions=['.js', '.html', '.css', '.mp3'])
     
     @eel.expose
-    def close_camera():
-        """Close camera after authentication"""
+    def init():
+        print("init function called")
         try:
-            subprocess.run(['taskkill', '/f', '/im', 'WindowsCamera.exe'], capture_output=True)
-            subprocess.run(['taskkill', '/f', '/im', 'Microsoft.WindowsCamera.exe'], capture_output=True)
-            print("Camera closed")
-            return True
+            play_sound()
+            subprocess.call([r'device.bat'], shell=True)
+            eel.hideLoader()
+            speak("Ready for Face Authentication")
+            flag = recoganize.AuthenticateFace()
+            if flag == 1:
+                eel.hideFaceAuth()
+                speak("Face Authentication Successful")
+                eel.hideFaceAuthSuccess()
+                speak("Hello, Welcome Sir, How can i Help You")
+                eel.hideStart()
+                play_sound()
+            else:
+                speak("Face Authentication Fail")
+                eel.receiverText("Face authentication failed. Please try again.")
         except Exception as e:
-            print(f"Error closing camera: {e}")
-            return False
+            print(f"Error in init: {e}")
+            traceback.print_exc()
+            speak("An error occurred during initialization")
     
-    # Don't call authentication here - let HTML handle it
-    os.system('start msedge.exe --app="http://localhost:8000/index.html"')
-    eel.start('index.html', mode=None, host='localhost', block=True)
-
-def startJarvis():
-    """Start the main Jarvis application"""
-    from main import start
-    start()
-
-def listenHotword():
-    """Start hotword detection"""
-    from engine.features import hotword
-    hotword()
-
-if __name__ == '__main__':
-    print("=" * 60)
-    print("🤖 AI Virtual Assistant - Starting Interface...")
-    print("=" * 60)
+    # Make sure all_commands is exposed from features
+    if 'all_commands' in globals():
+        print("all_commands function found")
+    else:
+        print("WARNING: all_commands function not found")
     
-    # Start both processes
-    print("🔄 Starting Jarvis and Hotword detection...")
-    p1 = multiprocessing.Process(target=startJarvis)
-    p2 = multiprocessing.Process(target=listenHotword)
+    # Open browser
+    try:
+        os.system('start msedge.exe --app="http://localhost:8000/index.html"')
+        print("Browser opened with Edge")
+    except:
+        try:
+            os.system('start chrome.exe --app="http://localhost:8000/index.html"')
+            print("Browser opened with Chrome")
+        except:
+            print("Failed to open browser automatically")
     
-    p1.start()
-    p2.start()
-    p1.join()
-    
-    if p2.is_alive():
-        p2.terminate()
-        p2.join()
+    # Start Eel with proper error handling
+    try:
+        print("Starting Eel on http://localhost:8000")
+        eel.start('index.html', 
+                  mode=None, 
+                  host='localhost', 
+                  port=8000,
+                  block=True,
+                  size=(1200, 800))
+    except Exception as e:
+        print(f"Error starting Eel: {e}")
+        traceback.print_exc()
+        sys.exit(1)

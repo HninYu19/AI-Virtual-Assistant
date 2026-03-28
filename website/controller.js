@@ -1,155 +1,110 @@
 $(document).ready(function() {
-  // Start face authentication when page loads
-  setTimeout(function() {
-    startFaceAuthentication();
-  }, 1000);
+  console.log('controller.js loaded successfully');
 
-  function startFaceAuthentication() {
-    console.log('Starting face authentication...');
+  // Check if Eel is available
+  if (typeof eel !== 'undefined') {
+    console.log('Eel is available in controller.js');
+  } else {
+    console.error('Eel not loaded in controller.js!');
+  }
 
-    // Show loader, hide others
-    $('#Loader').attr('hidden', false);
-    $('#FaceAuth').attr('hidden', true);
-    $('#FaceAuthSuccess').attr('hidden', true);
-    $('#HelloGreet').attr('hidden', true);
-
-    // Call Python authentication function
-    eel.start_authentication()(function(result) {
-      console.log('Authentication result:', result);
-
-      if (result.success) {
-        // Authentication successful - show success animations
-        console.log('Authentication successful!');
-
-        // Hide loader, show face auth animation
-        $('#Loader').attr('hidden', true);
-        $('#FaceAuth').attr('hidden', false);
-
-        setTimeout(function() {
-          // Hide face auth, show success animation
-          $('#FaceAuth').attr('hidden', true);
-          $('#FaceAuthSuccess').attr('hidden', false);
-        }, 2000);
-
-        setTimeout(function() {
-          // Hide success, show greeting
-          $('#FaceAuthSuccess').attr('hidden', true);
-          $('#HelloGreet').attr('hidden', false);
-        }, 3000);
-
-        setTimeout(function() {
-          // Hide start page and show main interface
-          $('#Start').attr('hidden', true);
-          $('#Oval').attr('hidden', false);
-          $('#Oval').addClass('animate__animated animate__zoomIn');
-        }, 5000);
-
-        // Close camera after authentication
-        eel.close_camera();
-
-      } else {
-        // Authentication failed
-        console.log('Authentication failed!');
-        alert('Face Authentication Failed! Please try again.');
-
-        // Reset and try again
-        setTimeout(function() {
-          startFaceAuthentication();
-        }, 2000);
+  // Display Speak Message
+  eel.expose(DisplayMessage);
+  function DisplayMessage(message) {
+    console.log('DisplayMessage called:', message);
+    if (message && message.trim() !== '') {
+      try {
+        // Replace the hidden textillate <li>
+        $('.siri-message .texts li').text(message);
+        // Re-initialize textillate so it splits into chars again
+        $('.siri-message').textillate('start');
+      } catch (e) {
+        console.error('Error in DisplayMessage:', e);
       }
-    });
-  }
-
-  $('.text').textillate({
-        loop: true,
-        sync: true,
-        in: {
-            effect: 'bounceIn',
-        },
-        out: {
-            effect: 'bounceOut',
-        },
-    });
-
-  // Siri Wave Configuration
-  var siriWave = new SiriWave({
-    container: document.getElementById('siri-container'),
-    width: 800,
-    height: 200,
-    style: 'ios9',
-    amplitude: '1',
-    speed: '0.3',
-    autostart: true,
-  });
-
-  // Siri message animation
-  $('.siri-message').textillate({
-        loop: true,
-        sync: true,
-        in: {
-            effect: 'fadeInUp',
-            sync: true,
-        },
-        out: {
-            effect: 'fadeOutUp',
-            sync: true,
-        },
-    });
-
-  // mic click
-  $('#MicBtn').click(function() {
-    eel.play_sound();
-    $('#Oval').attr('hidden', true);
-    $('#SiriWave').attr('hidden', false);
-    eel.all_commands()()
-  });
-
-  function doc_keyUp(e) {
-    if (e.key == 'j' && e.metaKey) {
-      eel.play_sound();
-      $('#Oval').attr('hidden', true);
-      $('#SiriWave').attr('hidden', false);
-      eel.all_commands()();
-    }
-  }
-  document.addEventListener('keyup', doc_keyUp, false);
-
-  function PlayAssistant(message) {
-    if (message != '') {
-      $('#Oval').attr('hidden', true);
-      $('#SiriWave').attr('hidden', false);
-      eel.all_commands(message);
-      $('#chatbox').val('');
-      $('#MicBtn').attr('hidden', false);
-      $('#ChatBtn').attr('hidden', true);
     }
   }
 
-  function ShowHideButtons(message) {
-    if (message.length == 0) {
-      $('#MicBtn').attr('hidden', false);
-      $('#SendBtn').attr('hidden', true);
-    } else {
-      $('#MicBtn').attr('hidden', true);
-      $('#SendBtn').attr('hidden', false);
+  // Display hood
+  eel.expose(ShowHood);
+  function ShowHood() {
+    console.log('ShowHood called');
+    $('#Oval').attr('hidden', false);
+    $('#SiriWave').attr('hidden', true);
+  }
+
+  eel.expose(senderText);
+  function senderText(message) {
+    console.log('senderText called:', message);
+    if (message && message.trim() !== '') {
+      var chatBox = document.getElementById('chat-canvas-body');
+      if (chatBox) {
+        chatBox.innerHTML += `<div class="row justify-content-end mb-4">
+          <div class="width-size">
+            <div class="sender_message">${escapeHtml(message)}</div>
+          </div>
+        </div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
     }
   }
 
-  $('#chatbox').keyup(function() {
-    let message = $('#chatbox').val();
-    ShowHideButtons(message);
-  });
-
-  $('#SendBtn').click(function() {
-    let message = $('#chatbox').val();
-    PlayAssistant(message);
-  });
-
-  $('#chatbox').keypress(function(e) {
-    key = e.which;
-    if (key == 13) {
-      let message = $('#chatbox').val();
-      PlayAssistant(message);
+  eel.expose(receiverText);
+  function receiverText(message) {
+    console.log('receiverText called:', message);
+    if (message && message.trim() !== '') {
+      var chatBox = document.getElementById('chat-canvas-body');
+      if (chatBox) {
+        chatBox.innerHTML += `<div class="row justify-content-start mb-4">
+          <div class="width-size">
+            <div class="receiver_message">${escapeHtml(message)}</div>
+          </div>
+        </div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
     }
-  });
+  }
+
+  // Hide Loader and display Face Auth animation
+  eel.expose(hideLoader);
+  function hideLoader() {
+    console.log('hideLoader called');
+    $('#Loader').attr('hidden', true);
+    $('#FaceAuth').attr('hidden', false);
+  }
+
+  // Hide Face auth and display Face Auth success animation
+  eel.expose(hideFaceAuth);
+  function hideFaceAuth() {
+    console.log('hideFaceAuth called');
+    $('#FaceAuth').attr('hidden', true);
+    $('#FaceAuthSuccess').attr('hidden', false);
+  }
+
+  // Hide success and display
+  eel.expose(hideFaceAuthSuccess);
+  function hideFaceAuthSuccess() {
+    console.log('hideFaceAuthSuccess called');
+    $('#FaceAuthSuccess').attr('hidden', true);
+    $('#HelloGreet').attr('hidden', false);
+  }
+
+  // Hide Start Page and display blob
+  eel.expose(hideStart);
+  function hideStart() {
+    console.log('hideStart called');
+    $('#Start').attr('hidden', true);
+    setTimeout(function() {
+      $('#Oval').addClass('animate__animated animate__zoomIn');
+      $('#Oval').attr('hidden', false);
+    }, 1000);
+  }
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
+  }
+
+  console.log('controller.js initialization complete');
 });
