@@ -13,7 +13,7 @@ adb connect %ip%
 @echo off
 
 rem Set the IP address of your Android device
-set DEVICE_IP=172.25.80.78
+set DEVICE_IP=172.25.89.111
 
 rem Set the port number for ADB
 set ADB_PORT=5555
