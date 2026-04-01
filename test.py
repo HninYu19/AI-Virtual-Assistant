@@ -1,7 +1,7 @@
 from google import genai
 
 # Replace with your NEW API key
-API_KEY = "AIzaSyC2IizbfZ3_q2E-CDnxc5QHufJChEIW-DY"
+API_KEY = ""
 
 print(f"Testing API key: {API_KEY[:15]}...")
 
