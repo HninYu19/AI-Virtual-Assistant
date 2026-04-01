@@ -57,3 +57,25 @@ def markdown_to_text(md):
     soup = BeautifulSoup(html, "html.parser")
     return soup.get_text().strip()
 
+def format_response_for_display(text, max_chars=100):
+    """Format text for display with line breaks"""
+    if not text:
+        return text
+    
+    # Split into sentences
+    sentences = text.split('. ')
+    formatted_sentences = []
+    current_line = ""
+    
+    for sentence in sentences:
+        if len(current_line + sentence) <= max_chars:
+            current_line += sentence + ". "
+        else:
+            if current_line:
+                formatted_sentences.append(current_line.strip())
+            current_line = sentence + ". "
+    
+    if current_line:
+        formatted_sentences.append(current_line.strip())
+    
+    return '\n'.join(formatted_sentences)

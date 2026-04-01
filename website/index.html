@@ -253,13 +253,13 @@
                                     autoplay></lottie-player>
                             </div>
                             <div id="FaceAuthSuccess" class="mb-4" hidden>
-                                <lottie-player src="assets/texllate/Loading bar.json"
+                                <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_lk80fpsm.json"
                                     background="transparent" speed="1" style="width: 300px; height: 300px;" loop
                                     autoplay></lottie-player>
                             </div>
                             <div id="HelloGreet" class="mb-4" hidden>
                                 <lottie-player
-                                    src="assets/texllate/Handwritten Welcome.json"
+                                    src="assets/texllate/wave.json"
                                     background="transparent" speed="1" style="width: 300px; height: 300px;" loop
                                     autoplay></lottie-player>
                             </div>
@@ -293,7 +293,6 @@
                         </div>
 
                     </div>
-                    <h5 class="text-light text text-center">Ask me anything</h5>
 
                     <div class="col-md-12 mt-4 pt-4">
                         <div class="text-center">
@@ -322,15 +321,8 @@
                     <div class="col-md-12">
                         <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
                             <div class="text-center">
-                                <!-- Only keep this top-left text -->
-                                <p class="text-start text-light mb-4 siri-message" style="font-size: 28px;">Hello, I am
-                                    J.A.R.V.I.S</p>
-
                                 <!-- Siri wave container -->
                                 <div id="siri-container"></div>
-
-                                <!-- REMOVE THIS DIV - No status message under SiriWave -->
-                                <!-- <div id="status-message" class="text-center text-light mt-4" style="font-size: 20px; font-weight: bold; min-height: 60px;"></div> -->
                             </div>
                         </div>
                     </div>
@@ -339,16 +331,14 @@
         </section>
     </div>
 
-    <!-- Chat Box -->
     <div class="offcanvas offcanvas-start chat-canvas" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
-        id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
-        <div class="offcanvas-header">
+        id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel" style="background: transparent !important;">
+        <div class="offcanvas-header" style="background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px);">
             <h5 class="offcanvas-title text-white" id="offcanvasScrollingLabel">Chats</h5>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-        <div id="chat-canvas-body" class="offcanvas-body">
+        <div id="chat-canvas-body" class="offcanvas-body" style="background: transparent;">
             <!-- Chatting code here -->
-
         </div>
     </div>
 

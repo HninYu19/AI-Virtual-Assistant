@@ -2,7 +2,7 @@ $(document).ready(function() {
   console.log('controller.js loaded successfully');
 
   // Variable to track if we should stay in SiriWave
-  window.stayInSiriWave = true;  // Default to stay in SiriWave
+  window.stayInSiriWave = true;
 
   // Check if Eel is available
   if (typeof eel !== 'undefined') {
@@ -21,8 +21,8 @@ $(document).ready(function() {
     eel.expose(hide_siri_wave);
     eel.expose(show_message);
     eel.expose(show_hood);
-    eel.expose(setStayInSiriWave);  // New function
-    eel.expose(goToMainScreen);  // New function to manually go to main screen
+    eel.expose(setStayInSiriWave);
+    eel.expose(goToMainScreen);
   } else {
     console.error('✗ Eel not loaded in controller.js!');
   }
@@ -45,30 +45,75 @@ $(document).ready(function() {
     }, 1000);
   }
 
-  // Display Speak Message
+  // Display Speak Message with wrapping
   function DisplayMessage(message) {
     console.log('DisplayMessage called:', message);
     if (message && message.trim() !== '') {
       try {
+        // Format message with line breaks for better display
+        var formattedMessage = formatMessageForDisplay(message);
+
         if ($('.siri-message .texts li').length > 0) {
-          $('.siri-message .texts li').text(message);
+          $('.siri-message .texts li').html(formattedMessage);
           $('.siri-message').textillate('start');
         } else {
-          $('.siri-message').text(message);
+          $('.siri-message').html(formattedMessage);
         }
+
+        // Auto-adjust font size for long messages
+        adjustFontSize($('.siri-message'), message.length);
+
       } catch (e) {
         console.error('Error in DisplayMessage:', e);
-        $('.siri-message').text(message);
+        $('.siri-message').html(escapeHtml(message));
       }
     }
   }
 
-  // Show message
+  // Format message with line breaks
+  function formatMessageForDisplay(message, maxLineLength = 50) {
+    if (!message) return '';
+
+    // Split into words
+    var words = message.split(' ');
+    var lines = [];
+    var currentLine = '';
+
+    for (var i = 0; i < words.length; i++) {
+      if ((currentLine + words[i]).length > maxLineLength) {
+        lines.push(currentLine.trim());
+        currentLine = words[i] + ' ';
+      } else {
+        currentLine += words[i] + ' ';
+      }
+    }
+
+    if (currentLine.trim()) {
+      lines.push(currentLine.trim());
+    }
+
+    return lines.join('<br>');
+  }
+
+  // Adjust font size based on message length
+  function adjustFontSize(element, messageLength) {
+    if (messageLength > 200) {
+      element.css('font-size', '16px');
+    } else if (messageLength > 100) {
+      element.css('font-size', '18px');
+    } else {
+      element.css('font-size', '24px');
+    }
+  }
+
+  // Show message with improved formatting
   function show_message(message) {
     console.log('show_message called:', message);
     if (message && message.trim() !== '') {
-      $('.siri-message').text(message);
-      console.log('Message updated to:', message);
+      var formattedMessage = formatMessageForDisplay(message);
+      $('.siri-message').html(formattedMessage);
+      adjustFontSize($('.siri-message'), message.length);
+      console.log('Message updated to:', formattedMessage);
     }
   }
 
@@ -84,7 +129,7 @@ $(document).ready(function() {
     console.log('ShowSiriWave called - showing SiriWave');
     $('#Oval').attr('hidden', true);
     $('#SiriWave').attr('hidden', false);
-    $('.siri-message').text('How can I help you?');
+    $('.siri-message').html('How can I help you?');
     console.log('SiriWave is now visible');
   }
 
@@ -104,19 +149,21 @@ $(document).ready(function() {
       $('#Oval').attr('hidden', false);
     } else {
       console.log('Staying in SiriWave mode');
-      // Just clear the message but stay in SiriWave
-      $('.siri-message').text('Ready for next command');
+      $('.siri-message').html('Ready for next command');
     }
   }
 
+  // Enhanced sender text with better formatting
   function senderText(message) {
     console.log('senderText called:', message);
     if (message && message.trim() !== '') {
       var chatBox = document.getElementById('chat-canvas-body');
       if (chatBox) {
+        var formattedMessage = formatMessageForDisplay(message, 40);
         chatBox.innerHTML += `<div class="row justify-content-end mb-4">
           <div class="width-size">
-            <div class="sender_message">${escapeHtml(message)}</div>
+            <div class="sender_message" style="white-space: pre-wrap; word-wrap: break-word;">${
+            escapeHtml(formattedMessage)}</div>
           </div>
         </div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -124,21 +171,33 @@ $(document).ready(function() {
     }
   }
 
+  // Enhanced receiver text with better formatting and scrolling
   function receiverText(message) {
     console.log('receiverText called:', message);
     if (message && message.trim() !== '') {
       var chatBox = document.getElementById('chat-canvas-body');
       if (chatBox) {
+        var formattedMessage = formatMessageForDisplay(message, 40);
         chatBox.innerHTML += `<div class="row justify-content-start mb-4">
           <div class="width-size">
-            <div class="receiver_message">${escapeHtml(message)}</div>
+            <div class="receiver_message" style="white-space: pre-wrap; word-wrap: break-word; max-width: 100%;">${
+            escapeHtml(formattedMessage)}</div>
           </div>
         </div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
       }
 
       if (!$('#SiriWave').attr('hidden')) {
-        $('.siri-message').text(message);
+        var siriFormattedMessage = formatMessageForDisplay(message, 50);
+        $('.siri-message').html(siriFormattedMessage);
+        adjustFontSize($('.siri-message'), message.length);
+
+        // Auto-scroll siri message if needed
+        if ($('.siri-message').height() > 100) {
+          $('.siri-message')
+              .css('overflow-y', 'auto')
+              .css('max-height', '150px');
+        }
       }
     }
   }
@@ -192,3 +251,62 @@ $(document).ready(function() {
 
   console.log('✓ controller.js initialization complete');
 });
+
+// Pagination variables
+var currentResponseChunk = 0;
+var responseChunks = [];
+
+function receiverText(message) {
+  console.log('receiverText called:', message);
+  if (message && message.trim() !== '') {
+    var chatBox = document.getElementById('chat-canvas-body');
+    if (chatBox) {
+      var formattedMessage = formatMessageForDisplay(message, 40);
+
+      // Check if this is a paginated message
+      var isPaginated = message.includes('Say \'continue\' to read more') ||
+          message.includes('More available');
+
+      chatBox.innerHTML += `<div class="row justify-content-start mb-4">
+                <div class="width-size">
+                    <div class="receiver_message" style="white-space: pre-wrap; word-wrap: break-word; max-width: 100%;">
+                        ${escapeHtml(formattedMessage)}
+                        ${
+          isPaginated ?
+              '<br><br><button class="continue-reading-btn" onclick="requestMore()">Continue Reading ▶</button>' :
+              ''}
+                    </div>
+                </div>
+            </div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    if (!$('#SiriWave').attr('hidden')) {
+      var siriFormattedMessage = formatMessageForDisplay(message, 50);
+      $('.siri-message').html(siriFormattedMessage);
+      adjustFontSize($('.siri-message'), message.length);
+
+      // Auto-scroll siri message if needed
+      if ($('.siri-message').height() > 100) {
+        $('.siri-message').css('overflow-y', 'auto').css('max-height', '150px');
+      }
+    }
+  }
+}
+
+// Function to request more content
+function requestMore() {
+  console.log('Requesting more content...');
+  if (typeof eel !== 'undefined') {
+    eel.all_commands('continue')()
+        .then(function(result) {
+          console.log('Continue command sent');
+        })
+        .catch(function(error) {
+          console.error('Error sending continue command:', error);
+        });
+  }
+}
+
+// Global function for button click
+window.requestMore = requestMore;

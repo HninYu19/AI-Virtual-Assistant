@@ -378,6 +378,8 @@ def sendMessage(message, mobileNo, name):
     speak("message send successfully to " + name)
 
 from google import genai
+import textwrap
+import re
 
 def geminai(query):
     try:
@@ -388,18 +390,54 @@ def geminai(query):
         client = genai.Client(api_key="")  # Your working key
         
         response = client.models.generate_content(
-            model="gemini-2.5-flash",  # This model works!
+            model="gemini-2.5-flash",
             contents=query
         )
         
         clean_text = markdown_to_text(response.text)
-        speak(clean_text)
-        return clean_text
+        
+        # Get full response length
+        print(f"Full response length: {len(clean_text)} characters")
+        
+        # Option 1: Show first 5 complete sentences (recommended)
+        sentences = re.split(r'(?<=[.!?])\s+', clean_text)
+        if len(sentences) > 5:
+            # Take first 5 complete sentences
+            truncated_text = ' '.join(sentences[:5])
+            was_truncated = True
+            print(f"Showing first 5 sentences ({len(truncated_text)} chars)")
+        else:
+            truncated_text = clean_text
+            was_truncated = False
+        
+        # Add ellipsis if truncated
+        if was_truncated:
+            truncated_text += "... (Response truncated for readability)"
+        
+        # Format with line breaks for better readability
+        wrapped_text = textwrap.fill(truncated_text, width=80)
+        
+        # Speak the response
+        speak(wrapped_text)
+        
+        # Send to UI
+        eel.receiverText(wrapped_text)
+        
+        # Store full response for optional "continue" command
+        if was_truncated:
+            full_response = clean_text
+            # You can store this in a global or session variable
+            # To allow user to ask "continue" or "tell me more"
+            global last_full_response
+            last_full_response = full_response
+        
+        return wrapped_text
         
     except Exception as e:
         print(f"Error in geminai: {e}")
         error_msg = "Sorry, I encountered an error while processing your request."
         speak(error_msg)
+        eel.receiverText(error_msg)
         return error_msg
 # Assistant name
 @eel.expose
