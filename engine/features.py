@@ -18,7 +18,6 @@ import cursor
 from pipes import quote
 from engine.command import all_commands
 from engine.helper import extract_yt_term, markdown_to_text, remove_words
-from hugchat import hugchat
 # Initialize database connection (you might already have this elsewhere)
 DB_PATH = "engine/jarvis.db"  # Adjust path as needed
 
@@ -307,16 +306,6 @@ def whatsApp(mobile_no, message, flag, name):
     
     speak(jarvis_message)
 
-def chatBot(query):
-    user_input = query.lower()
-    chatbot = hugchat.ChatBot(cookie_path="engine/cookies.json")
-    id = chatbot.new_conversation()
-    chatbot.change_conversation(id)
-    response = chatbot.chat(user_input)
-    print(response)
-    speak(response)
-    return response
-
 def makeCall(name, mobileNo):
     import subprocess
     import time
@@ -387,3 +376,33 @@ def sendMessage(message, mobileNo, name):
     time.sleep(2)
     
     speak("message send successfully to " + name)
+
+from google import genai
+
+def geminai(query):
+    try:
+        query = query.replace(ASSISTANT_NAME, "")
+        query = query.replace("search", "")
+        
+        # Use your working API key
+        client = genai.Client(api_key="AIzaSyC2IizbfZ3_q2E-CDnxc5QHufJChEIW-DY")  # Your working key
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",  # This model works!
+            contents=query
+        )
+        
+        clean_text = markdown_to_text(response.text)
+        speak(clean_text)
+        return clean_text
+        
+    except Exception as e:
+        print(f"Error in geminai: {e}")
+        error_msg = "Sorry, I encountered an error while processing your request."
+        speak(error_msg)
+        return error_msg
+# Assistant name
+@eel.expose
+def assistantName():
+    name = ASSISTANT_NAME
+    return name

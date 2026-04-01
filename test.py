@@ -1,9 +1,22 @@
-import pyautogui
-import time
+from google import genai
 
-print("Move your mouse to the video call button (camera icon) in WhatsApp")
-print("You have 5 seconds...")
-time.sleep(5)
+# Replace with your NEW API key
+API_KEY = "AIzaSyC2IizbfZ3_q2E-CDnxc5QHufJChEIW-DY"
 
-x, y = pyautogui.position()
-print(f"Video call button coordinates: x={x}, y={y}")
+print(f"Testing API key: {API_KEY[:15]}...")
+
+try:
+    # Initialize client
+    client = genai.Client(api_key=API_KEY)
+    
+    # Simple test query
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents="Say hello"
+    )
+    
+    print("✅ SUCCESS! API key works!")
+    print(f"Response: {response.text}")
+    
+except Exception as e:
+    print(f"❌ Error: {e}")

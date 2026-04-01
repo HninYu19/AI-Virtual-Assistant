@@ -30,7 +30,6 @@ def start():
                 play_sound()
             else:
                 speak("Face Authentication Fail")
-                eel.receiverText("Face authentication failed. Please try again.")
         except Exception as e:
             print(f"Error in init: {e}")
             traceback.print_exc()

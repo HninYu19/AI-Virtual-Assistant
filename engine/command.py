@@ -150,8 +150,8 @@ def all_commands(message=None):
                 else:
                     speak("Please specify WhatsApp or mobile")
         else:
-            from engine.features import chatBot
-            chatBot(query)
+            from engine.features import geminai
+            geminai(query)
             
     except Exception as e:
         print(f"Error processing command: {e}")
