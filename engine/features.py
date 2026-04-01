@@ -385,7 +385,7 @@ def geminai(query):
         query = query.replace("search", "")
         
         # Use your working API key
-        client = genai.Client(api_key="AIzaSyC2IizbfZ3_q2E-CDnxc5QHufJChEIW-DY")  # Your working key
+        client = genai.Client(api_key="")  # Your working key
         
         response = client.models.generate_content(
             model="gemini-2.5-flash",  # This model works!
