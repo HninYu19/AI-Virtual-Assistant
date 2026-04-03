@@ -381,13 +381,18 @@ from google import genai
 import textwrap
 import re
 
+# Global variable for full response
+last_full_response = ""
+
 def geminai(query):
+    global last_full_response
+    
     try:
-        query = query.replace(ASSISTANT_NAME, "")
+        query = query.replace("JARIVS", "")
         query = query.replace("search", "")
         
         # Use your working API key
-        client = genai.Client(api_key="")  # Your working key
+        client = genai.Client(api_key="")
         
         response = client.models.generate_content(
             model="gemini-2.5-flash",
@@ -399,7 +404,7 @@ def geminai(query):
         # Get full response length
         print(f"Full response length: {len(clean_text)} characters")
         
-        # Option 1: Show first 5 complete sentences (recommended)
+        # Split into sentences
         sentences = re.split(r'(?<=[.!?])\s+', clean_text)
         if len(sentences) > 5:
             # Take first 5 complete sentences
@@ -412,32 +417,38 @@ def geminai(query):
         
         # Add ellipsis if truncated
         if was_truncated:
-            truncated_text += "... (Response truncated for readability)"
+            truncated_text += "... (Response truncated for readability. Say 'continue' for more.)"
         
         # Format with line breaks for better readability
         wrapped_text = textwrap.fill(truncated_text, width=80)
         
+        # IMPORTANT: Send to chat AND speak
+        print(f"Sending to chat: {wrapped_text[:100]}...")
+        
+        # Send to UI chat
+        eel.receiverText(wrapped_text)
+        
+        # Also send to Siri message area
+        eel.show_message(wrapped_text)
+        
         # Speak the response
         speak(wrapped_text)
         
-        # Send to UI
-        eel.receiverText(wrapped_text)
-        
         # Store full response for optional "continue" command
         if was_truncated:
-            full_response = clean_text
-            # You can store this in a global or session variable
-            # To allow user to ask "continue" or "tell me more"
-            global last_full_response
-            last_full_response = full_response
+            last_full_response = clean_text
         
         return wrapped_text
         
     except Exception as e:
         print(f"Error in geminai: {e}")
+        import traceback
+        traceback.print_exc()
         error_msg = "Sorry, I encountered an error while processing your request."
-        speak(error_msg)
+        
+        # Send error to chat
         eel.receiverText(error_msg)
+        speak(error_msg)
         return error_msg
 # Assistant name
 @eel.expose

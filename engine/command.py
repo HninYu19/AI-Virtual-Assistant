@@ -9,6 +9,7 @@ def show_message(message):
     print(f"Status message: {message}")
     try:
         eel.show_message(message)
+        eel.show_status_message(message)
         print(f"Sent to JS: {message}")
     except Exception as e:
         print(f"Error sending message: {e}")
@@ -19,87 +20,95 @@ def speak(text):
     voices = engine.getProperty('voices')
     engine.setProperty('voice', voices[0].id)
     engine.setProperty('rate', 174)
+    
+    # Show the message being spoken
+    print(f"Speaking: {text}")
     eel.show_message(text)
+    eel.receiverText(text)  # This sends to chat
+    eel.senderText(f"Jarvis: {text}")  # Alternative display
+    
     engine.say(text)
-    eel.receiverText(text)
     engine.runAndWait()
-
 
 def takecommand():
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening...")
-        eel.show_message("Listening...")  # Added emoji for visibility
+        show_message("🎤 Listening...")
+        
         r.pause_threshold = 1
         r.adjust_for_ambient_noise(source)
         
         try:
             audio = r.listen(source, timeout=5, phrase_time_limit=5)
             print("Audio captured successfully")
+            show_message("✅ Audio captured")
         except sr.WaitTimeoutError:
             print("Listening timed out")
+            show_message("⏱️ No input detected")
             eel.receiverText("I didn't hear anything. Please try again.")
-            eel.show_message("No input detected")
             return ""
 
     try:
         print("Recognizing...")
-        eel.show_message("Recognizing...")
+        show_message("🔄 Recognizing...")
         query = r.recognize_google(audio, language='en-in')
         print(f"User said: {query}")
+        show_message(f"✅ Recognized: {query[:50]}...")
+        
+        # Send user command to chat
         eel.senderText(query)
         time.sleep(1)
         return query.lower()
         
     except sr.UnknownValueError:
         print("Could not understand audio")
+        show_message("❌ Could not understand")
         eel.receiverText("I couldn't understand that. Please try again.")
-        eel.show_message("Could not understand")
         return ""
+    
     except sr.RequestError as e:
         print(f"Could not request results; {e}")
+        show_message("❌ Speech service error")
         eel.receiverText("There was a problem with the speech recognition service.")
-        eel.show_message("Speech service error")
         return ""
 
-# In engine/command.py
 @eel.expose
 def all_commands(message=None):
-
-    """
-    Main command handler for the assistant
-    """
     print(f"all_commands called with message: {message}")
-
-     # Show SiriWave is active
-    eel.ShowSiriWave()  # Use this instead of ShowHood
+    eel.ShowSiriWave()
     
     # If no message provided, listen for voice command
     if message is None or message == 1 or message == "":
         print("Listening for voice command...")
+        show_message("🎤 Listening for command...")
         query = takecommand()
         print(f"Voice command result: '{query}'")
         
         if query and query.strip():
-            eel.senderText(query)
+            show_message(f"📝 Command: {query}")
+            # User command already sent in takecommand, but ensure it's there
         else:
             print("No voice command detected")
+            show_message("❌ No command detected")
             eel.receiverText("I didn't hear anything. Please try again.")
             return "No command detected"
     else:
         # Text command from chat
         print(f"Processing text command: {message}")
         query = message
+        show_message(f"📝 Processing: {query}")
         eel.senderText(query)
 
-         # Check for exit/back to main screen commands FIRST
+    # Check for exit/back to main screen commands FIRST
     if any(phrase in query for phrase in ["go back to main screen", "exit", "home", "main screen", "go to home", "back to home", "close"]):
         print("Going back to main screen")
         speak("Returning to main screen")
-        eel.goToMainScreen()  # Call the JavaScript function
+        eel.goToMainScreen()
         return "Returning to main screen"
     
     try:
+        show_message("⚙️ Processing command...")
         # Check for YouTube-related commands FIRST
         if "youtube" in query:
             from engine.features import handle_youtube_command
@@ -152,11 +161,14 @@ def all_commands(message=None):
         else:
             from engine.features import geminai
             geminai(query)
+        
+        show_message("✅ Command completed")
             
     except Exception as e:
         print(f"Error processing command: {e}")
         import traceback
         traceback.print_exc()
+        show_message(f"❌ Error: {str(e)[:50]}")
         eel.receiverText(f"Sorry, an error occurred: {str(e)}")
     
     return "Command processed"
